@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Panel extends JPanel {
 
@@ -88,27 +90,32 @@ public class Panel extends JPanel {
         scrollPane.setBounds(0, y, this.getWidth() - 15, this.getHeight() - y - 30);
 
         btnGuardar.addActionListener(e -> {
-            String aux = txtID.getText();
+            String aux = txtID.getText().trim();
             Producto producto;
-            int id = Integer.parseInt(aux);
+
+            int id;
 
             try {
+                id = Integer.parseInt(aux);
                 producto = productoDAO.get(id);
             } catch (Exception error){
-                JOptionPane.showMessageDialog(null,"El ID debe ser solo numeros");
+                JOptionPane.showMessageDialog(null,"El ID debe ser un numero entero!");
                 return;
             }
 
-            double precio = Double.parseDouble(txtPrecio.getText());
-            int cantidad = Integer.parseInt(txtCantidad.getText());
-
             if (producto == null){
 
-                String nombre = txtNombre.getText();
-                String codigo = txtCodigo.getText();
-                String fecha = txtFechaVencimiento.getText();
+                if (validarProducto()){
+                    String nombre = txtNombre.getText().trim();
+                    String codigo = txtCodigo.getText().trim();
+                    double precio = Double.parseDouble(txtPrecio.getText().trim());
+                    int cantidad = Integer.parseInt(txtCantidad.getText().trim());
+                    String fecha = txtFechaVencimiento.getText();
+                    producto = new Producto(id,nombre,codigo,precio,cantidad,fecha);
+                } else {
+                    return;
+                }
 
-                producto = new Producto(id,nombre,codigo,precio,cantidad,fecha);
                 try {
                     productoDAO.añadirProducto(producto);
                     JOptionPane.showMessageDialog(null, "Se añadió el producto correctamente");
@@ -118,12 +125,20 @@ public class Panel extends JPanel {
                     JOptionPane.showMessageDialog(null, "No se pudo añadir el producto");
                     throw new RuntimeException(ex);
                 }
-            } else {
-                String nombre = txtNombre.getText();
-                String codigo = txtCodigo.getText();
-                String fecha = txtFechaVencimiento.getText();
 
-                producto = new Producto(id,nombre,codigo,precio,cantidad,fecha);
+            } else {
+
+                if (validarProducto()){
+                    String nombre = txtNombre.getText().trim();
+                    String codigo = txtCodigo.getText().trim();
+                    double precio = Double.parseDouble(txtPrecio.getText().trim());
+                    int cantidad = Integer.parseInt(txtCantidad.getText().trim());
+                    String fecha = txtFechaVencimiento.getText();
+                    producto = new Producto(id,nombre,codigo,precio,cantidad,fecha);
+                } else {
+                    return;
+                }
+
                 try {
                     productoDAO.actualizarProducto(producto);
                     JOptionPane.showMessageDialog(null, "Se actualizó el producto con exito");
@@ -164,6 +179,67 @@ public class Panel extends JPanel {
         this.add(btnGuardar);
         this.add(btnEliminar);
         this.add(scrollPane);
+    }
+
+    private boolean validarProducto(){
+        String nombre = txtNombre.getText().trim();
+
+        if (nombre.isEmpty()){
+            JOptionPane.showMessageDialog(null, "El nombre no puede estar vacio");
+            return false;
+        }
+
+        String codigo = txtCodigo.getText().trim();
+
+        if (codigo.length() > 10){
+            JOptionPane.showMessageDialog(null, "El codigo no puede pasar de 10"
+            + " caracteres. Actualmente tiene " + codigo.length());
+            return false;
+        }
+
+        String auxPrecio = txtPrecio.getText().trim();
+        auxPrecio = auxPrecio.replace(",", ".");
+        double precio;
+
+        try {
+            precio = Double.parseDouble(auxPrecio);
+            if (precio < 0){
+                JOptionPane.showMessageDialog(null, "El precio no puede ser negativo");
+                return false;
+            }
+        } catch (Exception e){
+            JOptionPane.showMessageDialog(null, "El precio debe tener solo números!");
+            return false;
+        }
+
+        String auxCantidad = txtCantidad.getText().trim();
+        int cantidad;
+
+        try {
+            cantidad = Integer.parseInt(auxCantidad);
+            if (cantidad < 0){
+                JOptionPane.showMessageDialog(null, "La cantidad no puede ser negativa");
+                return false;
+            }
+        } catch (Exception e){
+            JOptionPane.showMessageDialog(null, "La cantidad debe ser un número entero menor a "
+            + Integer.MAX_VALUE);
+            return false;
+        }
+
+        String fecha = txtFechaVencimiento.getText().trim();
+        fecha = fecha.replace("/", "-");
+
+        Pattern pattern = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
+        Matcher matcher = pattern.matcher(fecha);
+
+        if (!matcher.find()){
+            JOptionPane.showMessageDialog(null, "El formato de fecha debe ser " +
+                    " YYYY/MM/DD");
+            return false;
+        }
+
+        return true;
     }
 
     private void iniciarJtable() {

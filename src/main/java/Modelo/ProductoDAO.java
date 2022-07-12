@@ -108,8 +108,6 @@ public class ProductoDAO extends AbstractDao<Producto> {
                 "fechaVencimiento = " + "'" + producto.fechaVencimiento() + "'" + " " +
                 "WHERE id = " + producto.id();
 
-        System.out.println(comando);
-
         conexion.conectar();
         Statement statement = conexion.getConexion().createStatement();
         conexion.ejecutar(statement, comando);

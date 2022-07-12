@@ -10,3 +10,7 @@ Create table producto(
     cantidad int,
     fechaVencimiento date
 );
+
+insert into producto values(1, 'Hola', 'Codigo', 10,1,curdate());
+
+UPDATE producto SET nombre = 'test', codigo = 'test2' WHERE id = 1;
